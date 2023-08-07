@@ -61,7 +61,11 @@ const main = async () => {
 
         const link = newItemsHref[i]
         const title = $(TITLE_SELECTOR).first().text().trim()
-        const descriptoin = $(DESCRIPTOIN_SELECTOR).first().text().trim()
+        const descriptoin = $(DESCRIPTOIN_SELECTOR)
+          .first()
+          .text()
+          .trim()
+          .replace(/\s+/g, ' ')
         const budget = $(BUDGET_SELECTOR).first().text().trim()
         const exepectedDuration = $(EXEPECTED_DURATION_SELECTOR)
           .first()
