@@ -74,11 +74,11 @@ const main = async () => {
           .replace(/\s+/g, ' ')
         const requiredSkills = $(SKILLS_SELECTOR)
           .map(function () {
-            return $(this).text().trim()
+            return `#${$(this).text().trim().replace(/\s+/g, '_')}`
           })
           .toArray()
 
-        const requiredSkillsString = requiredSkills.join(', ')
+        const requiredSkillsString = requiredSkills.join(' ')
 
         const message = `**\n\n[${title}](${link})\n\n${descriptoin}\n\nالميزانية: ${budget}\n\nمدة التنفيذ: ${exepectedDuration}\n\nالمهارات المطلوبة\n${requiredSkillsString}`
 
