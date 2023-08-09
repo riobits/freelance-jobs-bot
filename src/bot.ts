@@ -90,12 +90,12 @@ const main = async () => {
     }
 
     oldItemsHref = currentItemsHref
-
-    setTimeout(main, 1000 * 60 * 30)
   } catch (err) {
     console.error('💥 Something went wrong!')
     console.error(err)
   }
+
+  setTimeout(main, 1000 * 60 * 30)
 }
 
 main()
