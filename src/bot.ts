@@ -74,7 +74,7 @@ const main = async () => {
           .replace(/\s+/g, ' ')
         const requiredSkills = $(SKILLS_SELECTOR)
           .map(function () {
-            return `#${$(this).text().trim().replace(' ', '_')}`
+            return `#${$(this).text().trim().replace(/\s+/g, '_')}`
           })
           .toArray()
 
