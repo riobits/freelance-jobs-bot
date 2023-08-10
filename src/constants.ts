@@ -8,7 +8,7 @@ export const LINK_SELECTOR =
 
 export const TITLE_SELECTOR = 'span[data-type="page-header-title"]'
 
-export const DESCRIPTOIN_SELECTOR = '#project-brief-panel'
+export const DESCRIPTION_SELECTOR = '#project-brief-panel';
 
 export const SKILLS_SELECTOR = '.skills__item'
 
