@@ -1,6 +1,8 @@
-import 'dotenv/config'
-import * as cheerio from 'cheerio'
-import { getHTMLString, getManyHTMLString } from './lib/get-html-string'
+/** @format */
+
+import 'dotenv/config';
+import * as cheerio from 'cheerio';
+import { getHTMLString, getManyHTMLString } from './lib/get-html-string';
 import {
 	BUDGET_SELECTOR,
 	DESCRIPTION_SELECTOR,
@@ -86,7 +88,7 @@ const main = async () => {
 
 				const requiredSkills = $(SKILLS_SELECTOR)
 					.map(function () {
-						return `#${$(this).text().trim().replace(/\s+/g, '_')}`;
+						return `#${$(this).text().trim().replace(/\s+/g, '\\_')}`;
 					})
 					.toArray();
 
@@ -98,7 +100,7 @@ const main = async () => {
 					exepectedDuration || 'UNSET'
 				}\n\nالمهارات المطلوبة\n${requiredSkillsString || 'None'}`;
 
-        await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
+				await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
 					parse_mode: 'Markdown',
 					disable_web_page_preview: true,
 				});
@@ -114,4 +116,4 @@ const main = async () => {
 	setTimeout(main, 1000 * 60 * 30);
 };
 
-main()
+main();
