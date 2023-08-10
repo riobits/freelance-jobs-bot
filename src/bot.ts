@@ -11,6 +11,7 @@ import {
 	TITLE_SELECTOR,
 } from './constants';
 import { Telegraf } from 'telegraf';
+import { dinosaurDetection } from './lib/dino-detector';
 
 if (!process.env.BOT_TOKEN) {
 	throw new Error('BOT_TOKEN is not defined');
@@ -77,6 +78,10 @@ const main = async () => {
 					console.warn(
 						`No title or description, offer ignored\noffer: ${link}`
 					);
+					return;
+				} else if (dinosaurDetection(title) || dinosaurDetection(description)) {
+					console.warn(`\nignored: ${title}\nreason: Dinosaur Technology`);
+					return;
 				}
 
 				const requiredSkills = $(SKILLS_SELECTOR)
