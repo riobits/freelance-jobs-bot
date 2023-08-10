@@ -1,14 +1,14 @@
 /** @format */
-const dinoList: string[] = ['wordpress', 'ووردبريس', 'php'];
+import { dinoList } from '../constants'
 
 export const dinosaurDetection = (inputString: string): boolean => {
-	const lowerCaseInput = inputString.toLowerCase();
+  const lowerCaseInput = inputString.toLowerCase()
 
-	for (const profanity of dinoList) {
-		if (lowerCaseInput.includes(profanity)) {
-			return true;
-		}
-	}
+  for (const profanity of dinoList) {
+    if (lowerCaseInput.includes(profanity)) {
+      return true
+    }
+  }
 
-	return false;
-};
+  return false
+}

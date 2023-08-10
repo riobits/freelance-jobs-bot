@@ -1,3 +1,16 @@
+// General
+
+export const dinoList: string[] = [
+  'wordpress',
+  'ووردبريس',
+  'php',
+  'ورد بريس',
+  'وردبريس',
+  'وردبرس',
+  'ورد برس',
+  'ووردبرس',
+]
+
 // Mostaql
 
 export const MOSTAQL_URL =
@@ -8,7 +21,7 @@ export const LINK_SELECTOR =
 
 export const TITLE_SELECTOR = 'span[data-type="page-header-title"]'
 
-export const DESCRIPTION_SELECTOR = '#project-brief-panel';
+export const DESCRIPTION_SELECTOR = '#project-brief-panel'
 
 export const SKILLS_SELECTOR = '.skills__item'
 
