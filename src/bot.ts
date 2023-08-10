@@ -27,41 +27,42 @@ bot.launch();
 process.once('SIGINT', () => bot.stop('SIGINT'));
 process.once('SIGTERM', () => bot.stop('SIGTERM'));
 
-let oldItemsHref: string[] = [];
-let currentItemsHref: string[] = [];
+let oldOffersHref: string[] = [];
+let currentOffersHref: string[] = [];
 
 const main = async () => {
 	try {
 		const htmlString = await getHTMLString(MOSTAQL_URL);
 		const $ = cheerio.load(htmlString);
 
-		const allItemsHref = $(LINK_SELECTOR)
+		const allOffersHref = $(LINK_SELECTOR)
 			.map(function () {
 				return $(this).attr('href');
 			})
 			.toArray();
 
-		// First time running
-		if (oldItemsHref.length === 0) {
-			oldItemsHref = allItemsHref;
+		//? First time running
+		if (oldOffersHref.length === 0) {
+			oldOffersHref = allOffersHref;
 		}
 
-		currentItemsHref = allItemsHref;
+		currentOffersHref = allOffersHref;
 
-		const newItemsHref = currentItemsHref.filter(
-			(item) => !oldItemsHref.includes(item)
+		const newOffersHref = currentOffersHref.filter(
+			(item) => !oldOffersHref.includes(item)
 		);
 
-		if (newItemsHref.length > 0) {
-			// New items found
-			const htmlStrings = await getManyHTMLString(newItemsHref);
+		if (newOffersHref.length > 0) {
+			//? New items found
+			const offersHTMLs = await getManyHTMLString(newOffersHref);
 
-			for (let i = 0; i < htmlStrings.length; i++) {
-				const $ = cheerio.load(htmlStrings[i]);
+			offersHTMLs.forEach(async (offerEl, idx) => {
+				const $ = cheerio.load(offerEl);
+
 				const defaultSelector = (selector: string) =>
 					$(selector).first().text().trim();
 
-				const link = newItemsHref[i];
+				const link = newOffersHref[idx];
 				const title = defaultSelector(TITLE_SELECTOR);
 				const description = defaultSelector(DESCRIPTION_SELECTOR).replace(
 					/\s+/g,
@@ -72,7 +73,7 @@ const main = async () => {
 					EXEPECTED_DURATION_SELECTOR
 				).replace(/\s+/g, ' ');
 
-				if (!title || !description || !budget) {
+				if (!title || !description) {
 					console.warn(
 						`No title or description, offer ignored\noffer: ${link}`
 					);
@@ -86,16 +87,19 @@ const main = async () => {
 
 				const requiredSkillsString = requiredSkills.join(' ');
 
-				const message = `**\n\n[${title}](${link})\n\n${description}\n\nالميزانية: ${budget}\n\nمدة التنفيذ: ${exepectedDuration}\n\nالمهارات المطلوبة\n${requiredSkillsString}`;
+				const message = `**\n\n[${title}](${link})\n\n${description}\n\nالميزانية: ${
+					budget || 'UNSET'
+				}\n\nمدة التنفيذ: ${
+					exepectedDuration || 'UNSET'
+				}\n\nالمهارات المطلوبة\n${requiredSkillsString || 'None'}`;
 
 				await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
-					parse_mode: 'Markdown',
 					disable_web_page_preview: true,
 				});
-			}
+			});
 		}
 
-		oldItemsHref = currentItemsHref;
+		oldOffersHref = currentOffersHref;
 	} catch (err) {
 		console.error('💥 Something went wrong!');
 		console.error(err);
