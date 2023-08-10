@@ -98,7 +98,8 @@ const main = async () => {
 					exepectedDuration || 'UNSET'
 				}\n\nالمهارات المطلوبة\n${requiredSkillsString || 'None'}`;
 
-				await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
+        await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
+					parse_mode: 'Markdown',
 					disable_web_page_preview: true,
 				});
 			});
