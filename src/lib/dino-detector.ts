@@ -1,4 +1,3 @@
-/** @format */
 import { dinoList } from '../constants'
 
 export const dinosaurDetection = (inputString: string): boolean => {

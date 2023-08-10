@@ -1,5 +1,3 @@
-/** @format */
-
 import 'dotenv/config'
 import * as cheerio from 'cheerio'
 import { getHTMLString, getManyHTMLString } from './lib/get-html-string'
