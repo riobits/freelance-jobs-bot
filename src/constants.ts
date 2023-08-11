@@ -9,6 +9,8 @@ export const dinoList: string[] = [
   'وردبرس',
   'ورد برس',
   'ووردبرس',
+  'لارافيل',
+  'laravel'
 ]
 
 // Mostaql
