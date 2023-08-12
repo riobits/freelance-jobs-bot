@@ -76,11 +76,12 @@ const main = async () => {
         ).replace(/\s+/g, ' ')
 
         if (!title || !description) {
-          console.warn(`No title or description, offer ignored\noffer: ${link}`)
-          return
-        } else if (dinosaurDetection(title) || dinosaurDetection(description)) {
-          console.warn(`\nignored: ${title}\nreason: Dinosaur Technology`)
-          return
+          continue
+        }
+
+        if (dinosaurDetection(title) || dinosaurDetection(description)) {
+          console.warn('🦖 Dinosaur detected:', title)
+          continue
         }
 
         const requiredSkills = $(SKILLS_SELECTOR)
