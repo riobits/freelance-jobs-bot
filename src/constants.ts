@@ -14,6 +14,7 @@ export const dinoList: string[] = [
   'angular',
   'سلة',
   'اودو',
+  'اودوو',
   'asp.net'
 ]
 
