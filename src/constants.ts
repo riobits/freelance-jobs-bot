@@ -10,6 +10,7 @@ export const dinoList: string[] = [
   'ورد برس',
   'ووردبرس',
   'لارافيل',
+  'لارافل',
   'laravel',
   'angular',
   'سلة',
