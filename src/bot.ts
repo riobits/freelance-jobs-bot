@@ -1,6 +1,10 @@
 import 'dotenv/config'
 import * as cheerio from 'cheerio'
+import { Telegraf } from 'telegraf'
+
 import { getHTMLString, getManyHTMLString } from './lib/get-html-string'
+import { isBlacklistWord } from './lib/is-blacklist-word'
+
 import {
   BUDGET_SELECTOR,
   DESCRIPTION_SELECTOR,
@@ -10,8 +14,6 @@ import {
   SKILLS_SELECTOR,
   TITLE_SELECTOR,
 } from './constants'
-import { Telegraf } from 'telegraf'
-import { dinosaurDetection } from './lib/dino-detector'
 
 if (!process.env.BOT_TOKEN) {
   throw new Error('BOT_TOKEN is not defined')
@@ -42,8 +44,9 @@ const main = async () => {
       })
       .toArray()
 
-    //? First time running
-    if (oldOffersHref.length === 0) {
+    const isFirstRun = oldOffersHref.length === 0
+
+    if (isFirstRun) {
       oldOffersHref = allOffersHref
     }
 
@@ -53,59 +56,62 @@ const main = async () => {
       (item) => !oldOffersHref.includes(item)
     )
 
-    if (newOffersHref.length > 0) {
-      //? New items found
-      const offersHTMLs = await getManyHTMLString(newOffersHref)
+    oldOffersHref = currentOffersHref
 
-      for (let i = 0; i < offersHTMLs.length; i++) {
-        const offerHTML = offersHTMLs[i]
-        const $ = cheerio.load(offerHTML)
+    const newItemsFound = newOffersHref.length > 0
 
-        const defaultSelector = (selector: string) =>
-          $(selector).first().text().trim()
-
-        const link = newOffersHref[i]
-        const title = defaultSelector(TITLE_SELECTOR)
-        const description = defaultSelector(DESCRIPTION_SELECTOR).replace(
-          /\s+/g,
-          ' '
-        )
-        const budget = defaultSelector(BUDGET_SELECTOR)
-        const exepectedDuration = defaultSelector(
-          EXEPECTED_DURATION_SELECTOR
-        ).replace(/\s+/g, ' ')
-
-        if (!title || !description) {
-          continue
-        }
-
-        if (dinosaurDetection(title) || dinosaurDetection(description)) {
-          console.warn('🦖 Dinosaur detected:', title)
-          continue
-        }
-
-        const requiredSkills = $(SKILLS_SELECTOR)
-          .map(function () {
-            return `#${$(this).text().trim().replace(/\s+/g, '\\_')}`
-          })
-          .toArray()
-
-        const requiredSkillsString = requiredSkills.join(' ')
-
-        const message = `**\n\n[${title}](${link})\n\n${description}\n\nالميزانية: ${
-          budget || 'UNSET'
-        }\n\nمدة التنفيذ: ${
-          exepectedDuration || 'UNSET'
-        }\n\nالمهارات المطلوبة\n${requiredSkillsString || 'None'}`
-
-        await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
-          parse_mode: 'Markdown',
-          disable_web_page_preview: true,
-        })
-      }
+    if (!newItemsFound) {
+      return
     }
 
-    oldOffersHref = currentOffersHref
+    const offersHTMLs = await getManyHTMLString(newOffersHref)
+
+    for (let i = 0; i < offersHTMLs.length; i++) {
+      const offerHTML = offersHTMLs[i]
+      const $ = cheerio.load(offerHTML)
+
+      const defaultSelector = (selector: string) =>
+        $(selector).first().text().trim()
+
+      const link = newOffersHref[i]
+      const title = defaultSelector(TITLE_SELECTOR)
+      const description = defaultSelector(DESCRIPTION_SELECTOR).replace(
+        /\s+/g,
+        ' '
+      )
+      const budget = defaultSelector(BUDGET_SELECTOR)
+      const exepectedDuration = defaultSelector(
+        EXEPECTED_DURATION_SELECTOR
+      ).replace(/\s+/g, ' ')
+
+      if (!title || !description) {
+        continue
+      }
+
+      if (isBlacklistWord(title) || isBlacklistWord(description)) {
+        console.warn('🔎 Blacklist word detected:', title)
+        continue
+      }
+
+      const requiredSkills = $(SKILLS_SELECTOR)
+        .map(function () {
+          return `#${$(this).text().trim().replace(/\s+/g, '\\_')}`
+        })
+        .toArray()
+
+      const requiredSkillsString = requiredSkills.join(' ')
+
+      const message = `**\n\n[${title}](${link})\n\n${description}\n\nالميزانية: ${
+        budget || 'UNSET'
+      }\n\nمدة التنفيذ: ${exepectedDuration || 'UNSET'}\n\nالمهارات المطلوبة\n${
+        requiredSkillsString || 'None'
+      }`
+
+      await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
+        parse_mode: 'Markdown',
+        disable_web_page_preview: true,
+      })
+    }
   } catch (err) {
     console.error('💥 Something went wrong!')
     console.error(err)

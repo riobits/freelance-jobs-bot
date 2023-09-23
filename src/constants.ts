@@ -1,6 +1,6 @@
 // General
 
-export const dinoList: string[] = [
+export const blacklistWords: string[] = [
   'wordpress',
   'ووردبريس',
   'php',
@@ -16,7 +16,7 @@ export const dinoList: string[] = [
   'سلة',
   'اودو',
   'اودوو',
-  'asp.net'
+  'asp.net',
 ]
 
 // Mostaql
