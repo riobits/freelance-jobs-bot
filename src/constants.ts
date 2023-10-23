@@ -1,6 +1,6 @@
 // General
 
-export const durationMs = 1000 * 30
+export const durationMs = 1000 * 60 * 30
 
 export const blacklistWords: string[] = [
   'wordpress',
