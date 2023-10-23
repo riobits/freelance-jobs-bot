@@ -13,6 +13,7 @@ import {
   MOSTAQL_URL,
   SKILLS_SELECTOR,
   TITLE_SELECTOR,
+  durationMs,
 } from './constants'
 
 if (!process.env.BOT_TOKEN) {
@@ -69,63 +70,61 @@ const main = async () => {
     const newItemsFound = newOffersHref.length > 0
 
     if (!newItemsFound) {
-      return
-    }
+      const offersHTMLs = await getManyHTMLString(newOffersHref)
 
-    const offersHTMLs = await getManyHTMLString(newOffersHref)
+      for (let i = 0; i < offersHTMLs.length; i++) {
+        const offerHTML = offersHTMLs[i]
+        const $ = cheerio.load(offerHTML)
 
-    for (let i = 0; i < offersHTMLs.length; i++) {
-      const offerHTML = offersHTMLs[i]
-      const $ = cheerio.load(offerHTML)
+        const defaultSelector = (selector: string) =>
+          $(selector).first().text().trim()
 
-      const defaultSelector = (selector: string) =>
-        $(selector).first().text().trim()
+        const link = newOffersHref[i]
+        const title = defaultSelector(TITLE_SELECTOR)
+        const description = defaultSelector(DESCRIPTION_SELECTOR).replace(
+          /\s+/g,
+          ' '
+        )
+        const budget = defaultSelector(BUDGET_SELECTOR)
+        const exepectedDuration = defaultSelector(
+          EXEPECTED_DURATION_SELECTOR
+        ).replace(/\s+/g, ' ')
 
-      const link = newOffersHref[i]
-      const title = defaultSelector(TITLE_SELECTOR)
-      const description = defaultSelector(DESCRIPTION_SELECTOR).replace(
-        /\s+/g,
-        ' '
-      )
-      const budget = defaultSelector(BUDGET_SELECTOR)
-      const exepectedDuration = defaultSelector(
-        EXEPECTED_DURATION_SELECTOR
-      ).replace(/\s+/g, ' ')
+        if (!title || !description) {
+          continue
+        }
 
-      if (!title || !description) {
-        continue
-      }
+        if (isBlacklistWord(title) || isBlacklistWord(description)) {
+          console.warn('🔎 Blacklist word detected:', title)
+          continue
+        }
 
-      if (isBlacklistWord(title) || isBlacklistWord(description)) {
-        console.warn('🔎 Blacklist word detected:', title)
-        continue
-      }
+        const requiredSkills = $(SKILLS_SELECTOR)
+          .map(function () {
+            return `#${$(this).text().trim().replace(/\s+/g, '\\_')}`
+          })
+          .toArray()
 
-      const requiredSkills = $(SKILLS_SELECTOR)
-        .map(function () {
-          return `#${$(this).text().trim().replace(/\s+/g, '\\_')}`
+        const requiredSkillsString = requiredSkills.join(' ')
+
+        const message = `**\n\n[${title}](${link})\n\n${description}\n\nالميزانية: ${
+          budget || 'UNSET'
+        }\n\nمدة التنفيذ: ${
+          exepectedDuration || 'UNSET'
+        }\n\nالمهارات المطلوبة\n${requiredSkillsString || 'None'}`
+
+        await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
+          parse_mode: 'Markdown',
+          disable_web_page_preview: true,
         })
-        .toArray()
-
-      const requiredSkillsString = requiredSkills.join(' ')
-
-      const message = `**\n\n[${title}](${link})\n\n${description}\n\nالميزانية: ${
-        budget || 'UNSET'
-      }\n\nمدة التنفيذ: ${exepectedDuration || 'UNSET'}\n\nالمهارات المطلوبة\n${
-        requiredSkillsString || 'None'
-      }`
-
-      await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
-        parse_mode: 'Markdown',
-        disable_web_page_preview: true,
-      })
+      }
     }
   } catch (err) {
     console.error('💥 Something went wrong!')
     console.error(err)
   }
 
-  setTimeout(main, 1000 * 60 * 30)
+  setTimeout(main, durationMs)
 }
 
 main()
