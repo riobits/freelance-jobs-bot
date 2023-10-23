@@ -69,7 +69,7 @@ const main = async () => {
 
     const newItemsFound = newOffersHref.length > 0
 
-    if (!newItemsFound) {
+    if (newItemsFound) {
       const offersHTMLs = await getManyHTMLString(newOffersHref)
 
       for (let i = 0; i < offersHTMLs.length; i++) {
