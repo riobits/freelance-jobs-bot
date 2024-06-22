@@ -116,6 +116,18 @@ const main = async () => {
         await bot.telegram.sendMessage(process.env.CHANNEL_ID!, message, {
           parse_mode: 'Markdown',
           disable_web_page_preview: true,
+          reply_markup: {
+            inline_keyboard: [
+              [
+                {
+                  text: 'See Offer',
+                  web_app: {
+                    url: link,
+                  },
+                },
+              ],
+            ],
+          },
         })
       }
     }
