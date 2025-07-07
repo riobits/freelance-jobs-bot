@@ -56,6 +56,8 @@ const main = async () => {
     const isFirstRun = oldOffersHref.length === 0
 
     if (isFirstRun) {
+      const botInfo = await bot.telegram.getMe()
+      console.log(`🤖 Bot ${botInfo.username} is running...`)
       oldOffersHref = allOffersHref
     }
 
@@ -121,9 +123,6 @@ const main = async () => {
         })
       }
     }
-
-    const botInfo = await bot.telegram.getMe()
-    console.log(`🤖 Bot ${botInfo.username} is running...`)
   } catch (err) {
     console.error('💥 Something went wrong!')
     console.error(err)
