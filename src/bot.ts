@@ -2,8 +2,13 @@ import 'dotenv/config'
 import * as cheerio from 'cheerio'
 import { Telegraf } from 'telegraf'
 
-import { getHTMLString, getManyHTMLString } from './lib/get-html-string'
-import { isBlacklistWord } from './lib/is-blacklist-word'
+import {
+  extractLowestBudgetValue,
+  formatDescription,
+  getHTMLString,
+  getManyHTMLString,
+  isValidOffer,
+} from './utils'
 
 import {
   BUDGET_SELECTOR,
@@ -13,8 +18,11 @@ import {
   MOSTAQL_URL,
   SKILLS_SELECTOR,
   TITLE_SELECTOR,
-  durationMs,
 } from './constants'
+
+import appSettings from './settings/AppSettings'
+import { IOfferValidationItem } from './types'
+import authMiddleware from './middlewares/auth'
 
 if (!process.env.BOT_TOKEN) {
   throw new Error('BOT_TOKEN is not defined')
@@ -24,6 +32,10 @@ if (!process.env.CHANNEL_ID) {
   throw new Error('CHANNEL_ID is not defined')
 }
 
+if (!process.env.ADMIN_USER_ID) {
+  throw new Error('ADMIN_USER_ID is not defined')
+}
+
 const bot = new Telegraf(process.env.BOT_TOKEN)
 
 bot.launch()
@@ -31,23 +43,80 @@ bot.launch()
 bot.on('channel_post', (ctx) => {
   const postContent = (ctx.channelPost as any).text
 
-  if (postContent === '/id') {
+  if (postContent === '/channelid') {
     ctx.sendMessage(`${ctx.chat.id}`)
   }
+})
+
+bot.use(authMiddleware)
+
+// Add blacklist word
+bot.command('ab', (ctx) => {
+  const args = ctx.args
+  if (args.length === 0) return
+  const word = args[0]
+  appSettings.addBlacklistWord(word)
+  ctx.reply(`Added the word: \`${word}\``, { parse_mode: 'Markdown' })
+})
+
+// Remove blacklist word
+bot.command('rb', (ctx) => {
+  const args = ctx.args
+  if (args.length === 0) return
+  const word = args[0]
+  appSettings.removeBlacklistWord(word)
+  ctx.reply(`Removed the word: \`${word}\``, { parse_mode: 'Markdown' })
+})
+
+bot.command('changeduration', (ctx) => {
+  const args = ctx.args
+  if (args.length === 0) return
+  const duration = +args[0]
+  if (Number.isNaN(duration)) return
+  appSettings.changeScrapeDurationMins(duration)
+  ctx.reply(
+    `Changed the duration between each scrape to \`${duration} minutes\``,
+    { parse_mode: 'Markdown' }
+  )
+})
+
+bot.command('changeminbudget', (ctx) => {
+  const args = ctx.args
+  if (args.length === 0) return
+  const minBudget = +args[0]
+  if (Number.isNaN(minBudget)) return
+  appSettings.changeMinBudget(minBudget)
+  ctx.reply(`Changed the minimum budget to \`$${minBudget}\``, {
+    parse_mode: 'Markdown',
+  })
+})
+
+bot.command('myid', (ctx) => {
+  ctx.reply(`${ctx.from.id}`)
+})
+
+bot.command('settings', (ctx) => {
+  const { minBudget, durationMs, blacklistWords } = appSettings
+  const blacklistWordsStr = Array.from(blacklistWords).join(', ') || '_Empty_'
+
+  const message = `*Minimum budget:*\n${minBudget}\n\n*Duration between each scrape:*\n${
+    durationMs / 60000
+  } mins\n\n*Blacklisted words:*\n${blacklistWordsStr}`
+
+  ctx.reply(message, { parse_mode: 'Markdown' })
 })
 
 process.once('SIGINT', () => bot.stop('SIGINT'))
 process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
 let oldOffersHref: string[] = []
-let currentOffersHref: string[] = []
 
 const main = async () => {
   try {
     const htmlString = await getHTMLString(MOSTAQL_URL)
     const $ = cheerio.load(htmlString)
 
-    const allOffersHref = $(LINK_SELECTOR)
+    const currentOffersHref = $(LINK_SELECTOR)
       .map(function () {
         return $(this).attr('href')
       })
@@ -58,15 +127,12 @@ const main = async () => {
     if (isFirstRun) {
       const botInfo = await bot.telegram.getMe()
       console.log(`🤖 Bot ${botInfo.username} is running...`)
-      oldOffersHref = allOffersHref
+      oldOffersHref = currentOffersHref
     }
-
-    currentOffersHref = allOffersHref
 
     const newOffersHref = currentOffersHref.filter(
       (item) => !oldOffersHref.includes(item)
     )
-
     oldOffersHref = currentOffersHref
 
     const newItemsFound = newOffersHref.length > 0
@@ -81,25 +147,15 @@ const main = async () => {
         const defaultSelector = (selector: string) =>
           $(selector).first().text().trim()
 
-        const link = newOffersHref[i]
+        const url = newOffersHref[i]
         const title = defaultSelector(TITLE_SELECTOR)
-        const description = defaultSelector(DESCRIPTION_SELECTOR).replace(
-          /\s+/g,
-          ' '
+        const description = formatDescription(
+          defaultSelector(DESCRIPTION_SELECTOR).replace(/\s+/g, ' ')
         )
         const budget = defaultSelector(BUDGET_SELECTOR)
         const exepectedDuration = defaultSelector(
           EXEPECTED_DURATION_SELECTOR
         ).replace(/\s+/g, ' ')
-
-        if (!title || !description) {
-          continue
-        }
-
-        if (isBlacklistWord(title) || isBlacklistWord(description)) {
-          console.warn('🔎 Blacklist word detected:', title)
-          continue
-        }
 
         const requiredSkills = $(SKILLS_SELECTOR)
           .map(function () {
@@ -107,9 +163,16 @@ const main = async () => {
           })
           .toArray()
 
-        const requiredSkillsString = requiredSkills.join(' ')
+        const offer: IOfferValidationItem = {
+          title,
+          description,
+          budget: extractLowestBudgetValue(budget),
+        }
 
-        const message = `**\n\n[${title}](${link})\n\n${description}\n\nالميزانية: ${
+        if (!isValidOffer(offer)) continue
+
+        const requiredSkillsString = requiredSkills.join(' ')
+        const message = `**\n\n[${title}](${url})\n\n${description}\n\nالميزانية: ${
           budget || 'UNSET'
         }\n\nمدة التنفيذ: ${
           exepectedDuration || 'UNSET'
@@ -128,7 +191,7 @@ const main = async () => {
     console.error(err)
   }
 
-  setTimeout(main, durationMs)
+  setTimeout(main, appSettings.durationMs)
 }
 
 main()

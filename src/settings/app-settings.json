@@ -1,0 +1,5 @@
+{
+  "blacklistWords": [],
+  "minBudget": 100,
+  "durationMs": 1800000
+}

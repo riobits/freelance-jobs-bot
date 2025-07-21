@@ -1,28 +1,3 @@
-// General
-
-export const durationMs = 1000 * 60 * 30
-
-export const blacklistWords: string[] = [
-  'wordpress',
-  'ووردبريس',
-  'php',
-  'ورد بريس',
-  'وردبريس',
-  'وردبرس',
-  'ورد برس',
-  'ووردبرس',
-  'لارافيل',
-  'لارافل',
-  'laravel',
-  'angular',
-  'سلة',
-  'اودو',
-  'اودوو',
-  'asp.net',
-]
-
-// Mostaql
-
 export const MOSTAQL_URL =
   'https://mostaql.com/projects?category=development&budget_max=10000&sort=latest'
 
