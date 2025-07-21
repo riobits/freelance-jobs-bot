@@ -129,6 +129,7 @@ const main = async () => {
     if (isFirstRun) {
       const botInfo = await bot.telegram.getMe()
       console.log(`🤖 Bot ${botInfo.username} is running...`)
+      oldOffersHref = currentOffersHref
     }
 
     const newOffersHref = currentOffersHref.filter(
