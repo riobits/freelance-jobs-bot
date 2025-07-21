@@ -1,5 +1,5 @@
 export const MOSTAQL_URL =
-  'https://mostaql.com/projects?category=development&budget_max=10000&sort=latest'
+  'https://mostaql.com/projects?category=development,support&budget_max=10000&sort=latest'
 
 export const LINK_SELECTOR =
   'table tbody tr td .card-title_wrapper .card--title h2 a'
