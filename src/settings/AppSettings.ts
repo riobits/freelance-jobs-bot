@@ -9,11 +9,13 @@ class AppSettings {
   public blacklistWords: Set<string>
   public minBudget: number
   public durationMs: number
+  public skills: string
 
   constructor() {
     this.blacklistWords = new Set(settings.blacklistWords)
     this.minBudget = settings.minBudget
     this.durationMs = settings.durationMs
+    this.skills = settings.skills || ''
   }
 
   addBlacklistWord(word: string) {
@@ -38,11 +40,17 @@ class AppSettings {
     this.saveSettings()
   }
 
+  changeSkills(skills: string) {
+    this.skills = skills
+    this.saveSettings()
+  }
+
   private saveSettings() {
     const updatedSettings = {
       blacklistWords: Array.from(this.blacklistWords),
       minBudget: this.minBudget,
       durationMs: this.durationMs,
+      skills: this.skills,
     }
 
     fs.writeFileSync(

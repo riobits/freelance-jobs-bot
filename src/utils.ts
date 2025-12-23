@@ -1,5 +1,10 @@
+import { GoogleGenAI } from '@google/genai'
 import appSettings from './settings/AppSettings'
 import { IOfferValidationItem } from './types'
+
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY,
+})
 
 export async function getHTMLString(url: string): Promise<string> {
   const response = await fetch(url)
@@ -38,11 +43,41 @@ export const extractLowestBudgetValue = (text: string) => {
   return Math.min(...prices.map(parseFloat))
 }
 
-export const isValidOffer = (offer: IOfferValidationItem) => {
+export const isValidOffer = async (offer: IOfferValidationItem) => {
   const noBlacklistWords =
     !hasBlacklistWord(offer.title) || !hasBlacklistWord(offer.description)
   const aboveMinBudget = appSettings.minBudget <= offer.budget
   const noMissingFields = !!offer.title && !!offer.description
+  const validByAI = await isValidByAI(offer)
 
-  return noBlacklistWords && aboveMinBudget && noMissingFields
+  return noBlacklistWords && aboveMinBudget && noMissingFields && validByAI
+}
+
+const isValidByAI = async (offer: IOfferValidationItem) => {
+  if (!appSettings.skills) return true
+
+  try {
+    const lowerCaseDescription = offer.description.toLowerCase()
+    const response = await ai.models.generateContent({
+      model: 'gemma-3-27b-it',
+      contents:
+        'You can only answer with "true" or "false". Is the following description relevant to the skills: ' +
+        appSettings.skills +
+        '? Description: ' +
+        lowerCaseDescription,
+    })
+
+    if (!response.text) return true
+
+    const val = JSON.parse(response.text.trim().toLowerCase())
+
+    if (typeof val === 'boolean') {
+      return val
+    }
+
+    return true
+  } catch (error) {
+    console.error('AI validation error:', error)
+    return true
+  }
 }

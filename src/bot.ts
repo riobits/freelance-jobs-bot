@@ -91,6 +91,14 @@ bot.command('changeminbudget', (ctx) => {
   })
 })
 
+bot.command('changeskills', (ctx) => {
+  const args = ctx.args
+  if (args.length === 0) return
+  const skills: string = args[0]
+  appSettings.changeSkills(skills.trim())
+  ctx.reply(`Changed the required skills to: ${skills}`)
+})
+
 bot.command('myid', (ctx) => {
   ctx.reply(`${ctx.from.id}`)
 })
@@ -171,7 +179,9 @@ const main = async () => {
           budget: extractLowestBudgetValue(budget),
         }
 
-        if (!isValidOffer(offer)) continue
+        const isValid = await isValidOffer(offer)
+
+        if (!isValid) continue
 
         const requiredSkillsString = requiredSkills.join(' ')
         const message = `**\n\n[${title}](${url})\n\n${description}\n\nالميزانية: ${
