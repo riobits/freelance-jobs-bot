@@ -104,12 +104,12 @@ bot.command('myid', (ctx) => {
 })
 
 bot.command('settings', (ctx) => {
-  const { minBudget, durationMs, blacklistWords } = appSettings
+  const { minBudget, durationMs, blacklistWords, skills } = appSettings
   const blacklistWordsStr = Array.from(blacklistWords).join(', ') || '_Empty_'
 
   const message = `*Minimum budget:*\n${minBudget}\n\n*Duration between each scrape:*\n${
     durationMs / 60000
-  } mins\n\n*Blacklisted words:*\n${blacklistWordsStr}`
+  } mins\n\n*Blacklisted words:*\n${blacklistWordsStr}\n*Required skills:*\n${skills}`
 
   ctx.reply(message, { parse_mode: 'Markdown' })
 })
