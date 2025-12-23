@@ -134,7 +134,17 @@ process.once('SIGTERM', () => bot.stop('SIGTERM'))
 
 let oldOffersHref: string[] = []
 
+// Track consecutive failures and apply exponential backoff on retries
+let consecutiveFailures = 0
+const MAX_BACKOFF_MS = 60 * 60 * 1000 // cap retry delay at 60 minutes
+const computeNextDelay = () =>
+  Math.min(
+    appSettings.durationMs * Math.pow(2, consecutiveFailures),
+    MAX_BACKOFF_MS
+  )
+
 const main = async () => {
+  let nextDelay = appSettings.durationMs
   try {
     const htmlString = await getHTMLString(
       MOSTAQL_URL + `&budget_min=${appSettings.minBudget}`
@@ -213,12 +223,31 @@ const main = async () => {
         })
       }
     }
+    // Success path: reset failures and use base delay
+    consecutiveFailures = 0
+    nextDelay = computeNextDelay()
   } catch (err) {
     console.error('💥 Something went wrong!')
     console.error(err)
+    // Failure path: increase backoff and notify admin
+    consecutiveFailures++
+    nextDelay = computeNextDelay()
+    try {
+      await bot.telegram.sendMessage(
+        process.env.ADMIN_USER_ID!,
+        `⚠️ Bot encountered an error.\nConsecutive failures: ${consecutiveFailures}\nNext retry in ${(
+          nextDelay / 60000
+        ).toFixed(1)} minute(s).\nError: ${
+          err instanceof Error ? err.message : String(err)
+        }`
+      )
+    } catch (notifyErr) {
+      console.error('Failed to notify admin about error')
+      console.error(notifyErr)
+    }
   }
 
-  setTimeout(main, appSettings.durationMs)
+  setTimeout(main, nextDelay)
 }
 
 main()
