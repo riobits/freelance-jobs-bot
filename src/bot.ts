@@ -50,6 +50,21 @@ bot.on('channel_post', (ctx) => {
 
 bot.use(authMiddleware)
 
+// Help command
+bot.command('start', (ctx) => {
+  const helpMessage = `Welcome to the Freelance Jobs Bot! Here are the available commands:
+
+/ab <word> - Add a word to the blacklist
+/rb <word> - Remove a word from the blacklist
+/changeduration <minutes> - Change the duration between each scrape
+/changeminbudget <amount> - Change the minimum budget for job offers
+/changeskills <skills> - Change the required skills for job offers
+/myid - Get your Telegram user ID
+/settings - View current bot settings`
+
+  ctx.reply(helpMessage)
+})
+
 // Add blacklist word
 bot.command('ab', (ctx) => {
   const args = ctx.args
